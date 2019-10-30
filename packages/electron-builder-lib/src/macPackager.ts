@@ -91,7 +91,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     if (!hasMas || targets.length > 1) {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
       nonMasPromise = (prepackaged ? Promise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets))
-        .then(() => this.sign(appPath, null, null))
+        //.then(() => this.sign(appPath, null, null)) // SPREAKER turn off invocation of sign during packaging
         .then(() => this.packageInDistributableFormat(appPath, Arch.x64, targets, taskManager))
     }
 
@@ -281,6 +281,32 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       }
       return
     }, CONCURRENCY)
+  }
+
+  // SPREAKER define correct API to sign
+  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
+    const appFileName = `${this.appInfo.productFilename}.app`
+
+    await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
+      if (file === appFileName) {
+        return this.sign(path.join(packContext.appOutDir, file), null, null)
+      }
+      return null
+    })
+
+    if (!isAsar) {
+      return
+    }
+
+    const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
+    await BluebirdPromise.map(orIfFileNotExist(readdir(outResourcesDir), []), (file: string): any => {
+      if (file.endsWith(".app")) {
+        return this.sign(path.join(outResourcesDir, file), null, null)
+      }
+      else {
+        return null
+      }
+    })
   }
 }
 
