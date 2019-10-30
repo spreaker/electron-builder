@@ -102,6 +102,11 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * 2.16.0 files
    */
   readonly electronUpdaterCompatibility?: string | null
+
+  /**
+   * SPREAKER introduce executable file name to fix autoupdate
+   */
+  readonly executableFilename?: string | null
 }
 
 export type RequestedExecutionLevel = "asInvoker" | "highestAvailable" | "requireAdministrator"
